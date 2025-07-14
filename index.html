@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沽源县农业面源污染风险手册</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://webapi.amap.com/loader.js"></script>
+    <style>
+        /* 保持原有样式不变 */
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            height: 300px;
+            width: 100%;
+            position: relative;
+        }
+        #map-container {
+            height: 400px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .highlight-text {
+            position: relative;
+            display: inline-block;
+        }
+        .highlight-text::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background-color: rgba(59, 130, 246, 0.2);
+            z-index: -1;
+        }
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        .back-to-top.active {
+            opacity: 1;
+        }
+        .mobile-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            margin: 0.5rem;
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+            transform-origin: top;
+            transform: scaleY(0);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 100;
+        }
+        .mobile-menu.active {
+            transform: scaleY(1);
+            opacity: 1;
+        }
+        .risk-high {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+        }
+        .risk-medium {
+            background-color: rgba(234, 179, 8, 0.1);
+            border-left: 4px solid #eab308;
+        }
+        .risk-low {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+        }
+        .media-container {
+            height: 350px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1rem;
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航条 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 p-4 mb-8" id="mainNav">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="text-xl font-bold text-blue-600">
+                <i class="fas fa-leaf mr-2"></i>沽源县农业面源污染风险手册
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#overview" class="text-gray-600 hover:text-blue-600 transition-colors">概况</a>
+                <a href="#crops" class="text-gray-600 hover:text-blue-600 transition-colors">农作物</a>
+                <a href="#pollution" class="text-gray-600 hover:text-blue-600 transition-colors">污染治理</a>
+                <a href="#map" class="text-gray-600 hover:text-blue-600 transition-colors">地图</a>
+            </div>
+            <button class="md:hidden text-gray-600 focus:outline-none" id="mobileMenuButton" aria-label="导航菜单">
+                <i class="fas fa-bars"></i>
+            </button>
+            <!-- 移动端导航菜单 -->
+            <div class="mobile-menu md:hidden" id="mobileMenu">
+                <a href="#overview" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                    <i class="fas fa-info-circle mr-3 text-blue-500"></i>概况
+                </a>
+                <a href="#crops" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                    <i class="fas fa-seedling mr-3 text-blue-500"></i>农作物
+                </a>
+                <a href="#pollution" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                    <i class="fas fa-recycle mr-3 text-blue-500"></i>污染治理
+                </a>
+                <a href="#map" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                    <i class="fas fa-map-marked-alt mr-3 text-blue-500"></i>地图
+                </a>
+            </div>
+        </div>
+    </nav>
+    <!-- 主要内容区 -->
+    <main class="container mx-auto px-4 md:px-8 pb-16">
+        <!-- 概况部分 -->
+        <section id="overview" class="glassmorphism p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white mr-3">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                沽源县农业面源污染风险手册
+            </h2>
+            <p class="text-gray-600 mb-6">沽源县位于河北省张家口市坝上地区，拥有耕地205万亩，天然富硒土地42万亩，是生产绿色、有机、富硒农产品的理想之地。本手册旨在为农业面源污染治理提供科学依据和技术指导。</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="glassmorphism p-6 card-hover text-center">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">205</div>
+                    <div class="text-gray-600">万亩耕地</div>
+                </div>
+                <div class="glassmorphism p-6 card-hover text-center">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">42</div>
+                    <div class="text-gray-600">万亩富硒土地</div>
+                </div>
+                <div class="glassmorphism p-6 card-hover text-center">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">1650</div>
+                    <div class="text-gray-600">万元治理投资</div>
+                </div>
+            </div>
+        </section>
+        <!-- 农作物部分 -->
+        <section id="crops" class="glassmorphism p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white mr-3">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                一、沽源县主要农作物概况
+            </h2>
+            <h3 class="text-2xl font-semibold mb-4">1.1 主要农作物种类及分布</h3>
+            <div class="overflow-x-auto mb-8">
+                <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作物类型</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">种植面积（2024年）</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主要分布区域</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">产业地位</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">藜麦</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">8.5万亩（2025年预计10万亩）</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">白土窑乡、二道渠乡、小河子乡</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">华北地区最大种植基地，全国六分之一产量，获评"中国藜麦产业示范县"</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">马铃薯</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">有机认证6123亩</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">全县范围</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">"中国马铃薯之乡"，创建"沽源马铃薯"区域公用品牌</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">错季蔬菜</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">设施农业面积3.5万亩</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">闪电河乡、长梁乡</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">西兰花、架豆等，建成环京蔬菜生产基地4个</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">特色作物</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">-</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">长梁乡、丰源店乡</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">新兴特色产业，市场开发前景广阔</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <h3 class="text-2xl font-semibold mb-4">1.2 农业生产现状</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-blue-50 p-6 rounded-lg">
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-blue-500 mt-1 mr-2"></i>
+                            <span>建成市级以上现代农业园区8个，面积20万亩</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-blue-500 mt-1 mr-2"></i>
+                            <span>农副产品加工企业23家，开发特色产品56种</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 p-6 rounded-lg">
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>2024年设施农业面积增长率全市第一</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>推广测土配方施肥技术，实现节肥20%以上</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <h3 class="text-2xl font-semibold mb-4">主要农作物施肥标准与调节建议</h3>
+            <div class="space-y-8">
+                <div>
+                    <h4 class="text-xl font-semibold mb-3">3.1 藜麦科学施肥方案</h4>
+                    <p class="text-gray-600 mb-4">(依据DB13/T 5852-2023《冀西北旱寒区藜麦栽培技术规程》)</p>
+                    <div class="overflow-x-auto mb-4">
+                        <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">施肥阶段</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">肥料种类</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">施用量</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">施用方式</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">基肥</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">有机肥</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2000-3000公斤/亩</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">播前翻耕入土</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">基肥</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">复合肥（15-15-15）</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">40-45公斤/亩</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">结合整地施用</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">追肥</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">磷酸二氢钾</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.3%溶液</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">初花期叶面喷施</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">追肥</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">硼肥</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">每亩50克</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">初花期叶面喷施</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <h5 class="font-semibold text-lg mb-2 text-yellow-700">调节建议：</h5>
+                        <ul class="list-disc pl-5 space-y-1 text-gray-700">
+                            <li>盐碱地种植减少化肥用量20%，增施有机肥至3000-4000公斤/亩</li>
+                            <li>采用水肥一体化技术可提高肥料利用率15-20%</li>
+                            <li>推广"有机肥＋配方肥"模式，替代纯化肥施用</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xl font-semibold mb-3">3.2 马铃薯科学施肥方案</h4>
+                    <p class="text-gray-600 mb-4">(参考内蒙古农牧厅及乌兰察布市技术标准)</p>
+                    <div class="overflow-x-auto mb-4">
+                        <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">营养元素</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">需求比例</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">施用量（亩产2000公斤）</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">施肥方式</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">氮（N）</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10-12公斤/亩</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">基肥50%+追肥50%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">磷（P₂O₅）</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.4</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4-5公斤/亩</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">全部基施</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">钾（K₂O）</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.1</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">20-22公斤/亩</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">基肥50%+膨大期50%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h5 class="font-semibold text-lg mb-2 text-blue-700">调节建议：</h5>
+                        <ul class="list-disc pl-5 space-y-1 text-gray-700">
+                            <li>有机种植区：禁用化学肥料，采用腐熟羊粪3000公斤/亩+草木灰100公斤/亩</li>
+                            <li>地下水禁采区：推广滴灌施肥技术，减少灌溉用水30%</li>
+                            <li>连作地块：增施微生物菌剂，降低土传病害风险</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- 污染治理部分 -->
+        <section id="pollution" class="glassmorphism p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white mr-3">
+                    <i class="fas fa-recycle"></i>
+                </div>
+                二、农业面源污染治理现状
+            </h2>
+            <h3 class="text-2xl font-semibold mb-4">2.1 主要治理工程</h3>
+            <p class="text-gray-600 mb-6">沽源县作为密云水库上游重要水源涵养区，实施了白河流域上游农业面源污染治理与水域生态修复工程，总投资1650万元，采用"过程削减+末端强化"的技术路线，在小河子乡17个点位建设：</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-4 rounded-lg shadow-sm text-center">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">86</div>
+                    <div class="text-gray-600">生态透水坝（石笼坝）</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm text-center">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">33</div>
+                    <div class="text-gray-600">沉砂池</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm text-center">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">21.3万</div>
+                    <div class="text-gray-600">平方米生态种植带</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm text-center">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">30.6万</div>
+                    <div class="text-gray-600">平方米人工湿地</div>
+                </div>
+            </div>
+            <h3 class="text-2xl font-semibold mb-4">2.2 治理成效</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-green-50 p-6 rounded-lg">
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>治理后出水水质达到Ⅲ类标准</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                            <span>氮磷污染物去除率显著提升</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-blue-50 p-6 rounded-lg">
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-blue-500 mt-1 mr-2"></i>
+                            <span>2024年全县化肥使用量较2021年下降0.04%</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-blue-500 mt-1 mr-2"></i>
+                            <span>建成省级农作物病虫害绿色防控示范区1个</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <h3 class="text-2xl font-semibold mb-4">四、农业面源污染风险评估</h3>
+            <h4 class="text-xl font-semibold mb-3">4.1 风险区域划分</h4>
+            <p class="text-gray-600 mb-4">基于白河上游治理工程分布及农作物种植密度，将全县划分为三个风险等级：</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="risk-high p-6 rounded-lg">
+                    <h5 class="text-lg font-bold text-red-600 mb-3">高风险区</h5>
+                    <p class="text-gray-700 mb-2">白河沿岸200米范围内</p>
+                    <p class="text-gray-700 mb-3"><strong>涉及乡镇：</strong>小河子乡、闪电河乡、平定堡镇</p>
+                    <p class="text-gray-700 mb-3"><strong>主要作物：</strong>蔬菜、马铃薯</p>
+                    <p class="text-gray-700"><strong>关键措施：</strong>实施生态沟渠+人工湿地系统，化肥施用减少30%</p>
+                </div>
+                <div class="risk-medium p-6 rounded-lg">
+                    <h5 class="text-lg font-bold text-yellow-600 mb-3">中风险区</h5>
+                    <p class="text-gray-700 mb-2">富硒耕地集中区</p>
+                    <p class="text-gray-700 mb-3"><strong>涉及乡镇：</strong>长梁乡、白土窑乡、西辛营乡</p>
+                    <p class="text-gray-700 mb-3"><strong>主要作物：</strong>藜麦、燕麦</p>
+                    <p class="text-gray-700"><strong>关键措施：</strong>推广有机种植，控制氮肥用量</p>
+                </div>
+                <div class="risk-low p-6 rounded-lg">
+                    <h5 class="text-lg font-bold text-green-600 mb-3">低风险区</h5>
+                    <p class="text-gray-700 mb-2">草原生态区</p>
+                    <p class="text-gray-700 mb-3"><strong>涉及乡镇：</strong>丰源店乡、小厂镇、莲花滩乡</p>
+                    <p class="text-gray-700 mb-3"><strong>主要作物：</strong>牧草、杂粮</p>
+                    <p class="text-gray-700"><strong>关键措施：</strong>轮作休耕，控制放牧强度</p>
+                </div>
+            </div>
+            <h4 class="text-xl font-semibold mb-3">4.2 风险防控技术体系</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h5 class="text-lg font-semibold mb-3 text-blue-600">源头控制</h5>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li>优化种植结构，减少高污染作物面积</li>
+                        <li>推广绿色防控技术，减少农药使用</li>
+                        <li>实施精准施肥，提高肥料利用率</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h5 class="text-lg font-semibold mb-3 text-green-600">过程拦截</h5>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li>建设生态缓冲带，宽度不小于10米</li>
+                        <li>修建沉砂池和滞留塘，拦截径流污染物</li>
+                        <li>坡耕地实施等高种植，减少水土流失</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h5 class="text-lg font-semibold mb-3 text-purple-600">末端治理</h5>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li>建设人工湿地，净化农田排水</li>
+                        <li>推广生态沟渠，去除氮磷污染物</li>
+                        <li>实施水生态修复，提升自净能力</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        <!-- 地图部分 -->
+        <section id="map" class="glassmorphism p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <div class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white mr-3">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                五、地图可视化展示
+            </h2>
+            <p class="text-gray-600 mb-6">沽源县地理位置：东经115.6885°，北纬41.6705°</p>
+            
+            <div id="map-container"></div>
+            
+            <div class="mt-6">
+                <h4 class="text-xl font-semibold mb-3">主要治理工程分布：</h4>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                    <li>太平营村南湿地（面积24.3万平方米）</li>
+                    <li>二道沟表流湿地（面积6.3万平方米）</li>
+                    <li>大东沟生态透水坝群（20座）</li>
+                    <li>红旗滩村东沟治理区</li>
+                </ul>
+            </div>
+            
+            <!-- 风险评价图部分（自动循环播放视频） -->
+            <div class="mt-10">
+                <h4 class="text-xl font-semibold mb-4">风险评价图</h4>
+                <div class="media-container">
+                    <!-- 视频模式（默认显示，添加自动循环属性） -->
+                    <video 
+                        id="risk-map-video" 
+                        src="风险评价视频.webm" 
+                        class="w-full h-full object-contain" 
+                        controls 
+                        loop
+                        autoplay
+                        muted
+                    ></video>
+                    
+                    <!-- 图片模式（备用） -->
+                    <img id="risk-map-image" src="测试图.png" alt="风险评估图" class="w-full h-full object-contain" style="display:none;">
+                    
+                    <!-- GIF模式（备用） -->
+                    <img id="risk-map-gif" src="风险评估.gif" alt="风险评估动画" class="w-full h-full object-contain" style="display:none;">
+                </div>
+                <p class="text-sm text-gray-500 mt-2 italic">注：该视频将自动循环播放，展示沽源县农业面源污染风险分布情况</p>
+            </div>
+        </section>
+        <!-- 实施保障措施 -->
+        <section class="glassmorphism p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white mr-3">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                六、实施保障措施
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-3 text-blue-600">6.1 技术支撑体系</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li>建立"科技小院"，开展田间技术指导</li>
+                        <li>组建京津冀专家团队，提供技术支持</li>
+                        <li>建设藜麦育种基地，培育耐肥品种</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3 text-green-600">6.2 政策保障措施</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li>实施化肥减量增效补贴政策</li>
+                        <li>对有机种植给予每亩200元奖励</li>
+                        <li>开展绿色种养循环农业试点</li>
+                        <li>将面源污染治理纳入政府考核</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3 text-purple-600">6.3 监测评估体系</h3>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li>建立农田氮磷流失监测网络</li>
+                        <li>定期开展土壤和水质监测</li>
+                        <li>评估治理工程运行效果</li>
+                        <li>发布年度面源污染防治报告</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        <!-- 参考文献 -->
+        <section class="glassmorphism p-8">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <div class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white mr-3">
+                    <i class="fas fa-book"></i>
+                </div>
+                七、参考文献
+            </h2>
+            <ol class="list-decimal pl-5 space-y-2 text-gray-700">
+                <li>《沽源县白河流域上游农业面源污染治理与水域生态修复工程可行性研究报告》</li>
+                <li>DB13/T 5852-2023《冀西北旱寒区藜麦栽培技术规程》</li>
+                <li>《张家口市2024年化肥减量增效工作方案》</li>
+                <li>《河北省2025年冬小麦春季科学施肥技术建议》</li>
+                <li>《沽源县加快推进后奥运经济发展2024年工作要点》</li>
+            </ol>
+        </section>
+    </main>
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 md:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-gray-400">页面内容均由 AI 生成，仅供参考</p>
+                </div>
+                <div>
+                    <p class="text-gray-400">created by <a href="https://space.coze.cn" class="text-blue-400 hover:text-blue-300 transition-colors">coze space</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- 返回顶部按钮 -->
+    <div class="back-to-top" id="backToTop">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+    <script>
+        // 保持原有脚本不变
+        // 移动端导航菜单切换
+        const menuButton = document.getElementById('mobileMenuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+        menuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('active');
+            const icon = this.querySelector('i');
+            if (mobileMenu.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+        // 点击页面其他区域关闭移动端菜单
+        document.addEventListener('click', function(event) {
+            const isClickInsideNav = document.getElementById('mainNav').contains(event.target);
+            if (!isClickInsideNav && mobileMenu.classList.contains('active')) {
+                mobileMenu.classList.remove('active');
+                const icon = menuButton.querySelector('i');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        // 返回顶部按钮
+        window.addEventListener('scroll', function() {
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('active');
+            } else {
+                backToTop.classList.remove('active');
+            }
+        });
+        document.getElementById('backToTop').addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        // 高德地图初始化
+        AMapLoader.load({
+            key: "d17c17f8f712c81a7e4241aff4faa7b0",
+            plugins: ["AMap.Scale", "AMap.ToolBar", "AMap.MarkerClusterer"],
+            AMapUI: {
+                version: "1.1",
+                plugins: ["overlay/SimpleMarker"]
+            }
+        }).then((AMap) => {
+            const map = new AMap.Map("map-container", {
+                viewMode: "2D",
+                zoom: 11,
+                center: [115.688544, 41.670497],
+                mapStyle: "amap://styles/light"
+            });
+            // 添加控件
+            map.addControl(new AMap.Scale());
+            map.addControl(new AMap.ToolBar());
+            // 高风险区域
+            const highRiskArea = new AMap.Polygon({
+                path: [
+                    [115.65, 41.68],
+                    [115.7, 41.68],
+                    [115.7, 41.66],
+                    [115.65, 41.66]
+                ],
+                fillColor: "rgba(239, 68, 68, 0.2)",
+                strokeColor: "#ef4444",
+                strokeWeight: 2
+            });
+            map.add(highRiskArea);
+            // 中风险区域
+            const mediumRiskArea = new AMap.Polygon({
+                path: [
+                    [115.6, 41.7],
+                    [115.65, 41.7],
+                    [115.65, 41.68],
+                    [115.6, 41.68]
+                ],
+                fillColor: "rgba(234, 179, 8, 0.2)",
+                strokeColor: "#eab308",
+                strokeWeight: 2
+            });
+            map.add(mediumRiskArea);
+            // 低风险区域
+            const lowRiskArea = new AMap.Polygon({
+                path: [
+                    [115.72, 41.69],
+                    [115.77, 41.69],
+                    [115.77, 41.67],
+                    [115.72, 41.67]
+                ],
+                fillColor: "rgba(16, 185, 129, 0.2)",
+                strokeColor: "#10b981",
+                strokeWeight: 2
+            });
+            map.add(lowRiskArea);
+            // 添加治理工程标记点
+            const markers = [
+                {
+                    position: [115.688544, 41.670497],
+                    title: "沽源县中心",
+                    content: "沽源县中心位置"
+                },
+                {
+                    position: [115.68, 41.67],
+                    title: "太平营村南湿地",
+                    content: "面积24.3万平方米"
+                },
+                {
+                    position: [115.69, 41.66],
+                    title: "二道沟表流湿地",
+                    content: "面积6.3万平方米"
+                },
+                {
+                    position: [115.67, 41.69],
+                    title: "大东沟生态透水坝群",
+                    content: "20座"
+                },
+                {
+                    position: [115.71, 41.68],
+                    title: "红旗滩村东沟治理区",
+                    content: "治理面积15万平方米"
+                }
+            ];
+            markers.forEach(markerData => {
+                const marker = new AMap.Marker({
+                    position: markerData.position,
+                    title: markerData.title,
+                    map: map
+                });
+                const infoWindow = new AMap.InfoWindow({
+                    content: `<div class="p-2">
+                        <h3 class="font-bold">${markerData.title}</h3>
+                        <p class="text-gray-600">${markerData.content}</p>
+                    </div>`,
+                    offset: new AMap.Pixel(0, -30)
+                });
+                marker.on('click', () => {
+                    infoWindow.open(map, marker.getPosition());
+                });
+            });
+            // 添加图例
+            const legend = new AMap.Control({
+                position: 'bottomright'
+            });
+            legend.onAdd = function(map) {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-3 rounded shadow-md';
+                div.innerHTML = `
+                    <h4 class="font-bold mb-2">风险区域图例</h4>
+                    <div class="flex items-center mb-1">
+                        <div class="w-4 h-4 bg-red-500 mr-2"></div>
+                        <span>高风险区</span>
+                    </div>
+                    <div class="flex items-center mb-1">
+                        <div class="w-4 h-4 bg-yellow-500 mr-2"></div>
+                        <span>中风险区</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-green-500 mr-2"></div>
+                        <span>低风险区</span>
+                    </div>
+                `;
+                return div;
+            };
+            map.addControl(legend);
+        }).catch(e => {
+            console.error(e);
+        });
+
+        // 媒体替换辅助函数（方便后期替换）
+        function replaceMedia(type, url) {
+            // 隐藏所有媒体元素
+            document.getElementById('risk-map-image').style.display = 'none';
+            document.getElementById('risk-map-video').style.display = 'none';
+            document.getElementById('risk-map-gif').style.display = 'none';
+            
+            // 显示目标媒体元素
+            if (type === 'image') {
+                const img = document.getElementById('risk-map-image');
+                img.src = url;
+                img.style.display = 'block';
+            } else if (type === 'video') {
+                const video = document.getElementById('risk-map-video');
+                video.src = url;
+                video.style.display = 'block';
+            } else if (type === 'gif') {
+                const gif = document.getElementById('risk-map-gif');
+                gif.src = url;
+                gif.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
